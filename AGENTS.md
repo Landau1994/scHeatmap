@@ -163,6 +163,30 @@ because it has been loaded with `load_all()`.
 - Do not delete user data, RDS files, or generated results without explicit
   confirmation.
 
+## Versioning and release push
+
+- Use semantic versions with exactly three numeric components:
+  `MAJOR.MINOR.PATCH`, for example `1.2.3`.
+- `DESCRIPTION` is the source of truth for the package version.
+- Do not increment the version for every local commit. When the user explicitly
+  requests a push, inspect all changes that will be published and increment the
+  version once before pushing.
+- Increment `PATCH` for compatible bug fixes, documentation, tests, packaging,
+  and maintenance changes.
+- Increment `MINOR` for backward-compatible new functions, arguments, plotting
+  modes, or other user-visible features, and reset `PATCH` to zero.
+- Increment `MAJOR` for intentional backward-incompatible API or behavior
+  changes, and reset `MINOR` and `PATCH` to zero.
+- When a push contains multiple change types, use the highest applicable level.
+- If `DESCRIPTION` has already been incremented for the exact set of changes
+  being pushed, do not increment it again.
+- After changing the version, validate that R can parse `DESCRIPTION`, create a
+  dedicated version-bump commit, and then push all pending commits. The user's
+  explicit push request authorizes this required pre-push version update, but
+  no other unrelated changes.
+- Report the old version, new version, version commit, validation, and pushed
+  branch after publication.
+
 ## Git hygiene
 
 - Inspect `git status`, the diff, and `git diff --check` before staging.
