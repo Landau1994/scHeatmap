@@ -9,8 +9,10 @@
 
 ![使用 scHeatmap 复现的文献风格小胶质细胞热图](man/figures/CR_2020_GSEreplicate_figS2E_20260721.jpg)
 
-*基于 CR2020 分析对象复现的文献风格小胶质细胞热图。完整代码见
-[文献图复现](#文献图复现)。*
+*该文献风格小胶质细胞热图使用 Lau 等（2020）的研究数据复现，数据来源论文为
+[《IL-33-PU.1 Transcriptome Reprogramming Drives Functional State Transition
+and Clearance Activity of Microglia in Alzheimer’s Disease》](https://www.cell.com/cell-reports/fulltext/S2211-1247(20)30430-7)。
+完整代码见[文献图复现](#文献图复现)。*
 
 ## 主要功能
 
@@ -157,8 +159,12 @@ average_ht <- sc_heatmap(
 ## 文献图复现
 
 README 顶部的图片展示了本包最初针对的复杂场景：基因按生物学程序分组，同时
-每个处理组使用不同的 marker 程序对组内细胞排序。通过 Git LFS 克隆完整仓库后，
-可以使用 `data-raw/` 中的 RDS 复现：
+每个处理组使用不同的 marker 程序对组内细胞排序。复现数据来自 Lau 等发表于
+Cell Reports 的 2020 年研究
+[《IL-33-PU.1 Transcriptome Reprogramming Drives Functional State Transition
+and Clearance Activity of Microglia in Alzheimer’s Disease》](https://www.cell.com/cell-reports/fulltext/S2211-1247(20)30430-7)
+（Cell Reports 31，107530；DOI：10.1016/j.celrep.2020.107530）。通过 Git LFS
+克隆完整仓库后，可以使用 `data-raw/` 中的 RDS 复现：
 
 ```r
 cr_seu <- readRDS("data-raw/CR_2020_scRNAseq_seu_annoted.rds")

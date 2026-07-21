@@ -10,8 +10,10 @@ and within-group cell ordering explicit and reproducible.
 
 ![Literature-style microglia heatmap reproduced with scHeatmap](man/figures/CR_2020_GSEreplicate_figS2E_20260721.jpg)
 
-*A literature-style microglia heatmap reproduced from the CR2020 analysis
-object. The complete code is shown in [Literature reproduction](#literature-reproduction).*
+*A literature-style microglia heatmap reproduced from data associated with Lau
+et al. (2020), [“IL-33-PU.1 Transcriptome Reprogramming Drives Functional State
+Transition and Clearance Activity of Microglia in Alzheimer’s Disease”](https://www.cell.com/cell-reports/fulltext/S2211-1247(20)30430-7).
+The complete code is shown in [Literature reproduction](#literature-reproduction).*
 
 ## Features
 
@@ -167,6 +169,10 @@ See `?sc_heatmap` and `?save_sc_heatmap` for all options.
 The figure at the top of this README demonstrates the more specialized workflow
 that motivated this package: genes are divided into biological programs, while
 cells in each treatment slice are ordered using a different marker program.
+The reproduction data come from the 2020 Cell Reports study by Lau et al.,
+[“IL-33-PU.1 Transcriptome Reprogramming Drives Functional State Transition and
+Clearance Activity of Microglia in Alzheimer’s Disease”](https://www.cell.com/cell-reports/fulltext/S2211-1247(20)30430-7)
+(Cell Reports 31, 107530; DOI: 10.1016/j.celrep.2020.107530).
 After cloning the repository with Git LFS, it can be reproduced from the RDS in
 `data-raw/`:
 
