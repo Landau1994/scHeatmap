@@ -7,24 +7,41 @@
 sc_heatmap(
   object,
   features,
+  mode = c("cell", "average"),
   group.by = NULL,
+  split.by = NULL,
+  aggregate.by = NULL,
   assay = NULL,
   layer = "data",
-  scale = TRUE,
+  scale = "row",
   cells = NULL,
+  downsample = NULL,
+  seed = 1,
   feature.groups = NULL,
+  label.features = NULL,
+  label.side = c("right", "left"),
+  label.fontface = c("italic", "plain"),
+  label.gp = NULL,
+  label.link.gp = grid::gpar(col = "grey50"),
+  order.by = "input",
   sort.by = NULL,
   decreasing = FALSE,
+  annotations = NULL,
+  annotation.colors = NULL,
   colors = c("#6B53A0", "black", "#F0E926"),
   color.breaks = NULL,
   clip = c(-2, 2),
   group.colors = NULL,
   show.group.annotation = TRUE,
+  missing.features = c("error", "warn", "drop"),
   cluster.rows = FALSE,
   cluster.columns = FALSE,
   show.row.names = TRUE,
+  show.feature.names = show.row.names,
   show.column.names = FALSE,
-  heatmap.name = if (scale) "z-score" else "expression",
+  show.group.names = TRUE,
+  heatmap.name = NULL,
+  border.color = "black",
   use.raster = TRUE,
   ...
 )
@@ -34,29 +51,64 @@ sc_heatmap(
 
 \item{features}{Character vector of feature names, in the desired row order.}
 
-\item{group.by}{Metadata column used to split heatmap columns. Use \code{NULL} for
-no column split. Factor levels determine group order; character metadata is
-shown in order of first appearance.}
+\item{mode}{Either \code{"cell"} for one column per cell or \code{"average"} for one
+column per metadata combination.}
+
+\item{group.by}{Deprecated-compatible alias for \code{split.by}. Existing code may
+continue to use it.}
+
+\item{split.by}{One metadata column used to split heatmap columns. Factor
+levels determine slice order.}
+
+\item{aggregate.by}{Metadata columns used to calculate average expression
+when \code{mode = "average"}. Defaults to \code{split.by}.}
 
 \item{assay}{Assay to use. Defaults to \code{\link[SeuratObject:DefaultAssay]{SeuratObject::DefaultAssay()}}.}
 
-\item{layer}{Expression layer. Defaults to \code{"data"}. Use \code{"counts"} for raw
-counts or \code{"scale.data"} for an existing scaled matrix.}
+\item{layer}{Expression layer. Defaults to \code{"data"}.}
 
-\item{scale}{Logical; z-score each feature across the selected cells. This is
-done locally and does not change \code{object}.}
+\item{scale}{Scaling method: \code{"row"}, \code{"column"}, or \code{"none"}. Logical
+\code{TRUE} and \code{FALSE} remain supported as aliases for \code{"row"} and \code{"none"}.}
 
 \item{cells}{Optional character vector of cell names to include.}
+
+\item{downsample}{Maximum number of cells retained per \code{split.by} group in
+cell mode. A single number samples globally when \code{split.by = NULL}.}
+
+\item{seed}{Random seed used for reproducible downsampling.}
 
 \item{feature.groups}{Optional named list of feature vectors, or a factor
 aligned with \code{features}, used to split rows into marker groups.}
 
-\item{sort.by}{Optional named list defining within-group cell ordering. Each
-name must match a group and each value is a feature vector whose mean is
-used as the cell score. A single feature vector applies to every group.}
+\item{label.features}{Optional subset of \code{features} whose row names should be
+displayed with connecting lines. All features remain in the heatmap.
+Defaults to displaying every feature as ordinary row names.}
+
+\item{label.side}{Side on which linked \code{label.features} are drawn.}
+
+\item{label.fontface}{Font face for linked gene labels: \code{"italic"} (default)
+or \code{"plain"}.}
+
+\item{label.gp}{Optional complete graphical-parameter override for linked
+gene labels. For example, \code{grid::gpar(fontface = "plain", col = "red")}.}
+
+\item{label.link.gp}{Graphical parameters for label connecting lines.}
+
+\item{order.by}{Column ordering rule. Use \code{"input"}, \code{"cluster"}, a metadata
+column name, a feature vector (ordered by its mean score), or a numeric
+vector aligned with selected cells/aggregated columns.}
+
+\item{sort.by}{Legacy specialized ordering: a named list mapping each
+\code{split.by} group to a different feature vector. It takes precedence over
+\code{order.by} and is supported only in cell mode.}
 
 \item{decreasing}{Sort high-to-low when \code{TRUE}. May be one value or a named
-logical vector by group.}
+logical vector for legacy \code{sort.by} rules.}
+
+\item{annotations}{Metadata columns shown as top annotations.}
+
+\item{annotation.colors}{Optional named list of color mappings, one per
+annotation. Discrete mappings should be named character vectors.}
 
 \item{colors}{Three or more colors used for the expression color ramp.}
 
@@ -66,16 +118,34 @@ values across \code{clip}.}
 \item{clip}{Length-two numeric range used to clip displayed values. Set to
 \code{NULL} to disable clipping.}
 
-\item{group.colors}{Optional named colors for a top group annotation.}
+\item{group.colors}{Deprecated-compatible color mapping for \code{split.by}.}
 
-\item{show.group.annotation}{Show the group annotation bar when colors are
-supplied.}
+\item{show.group.annotation}{Show metadata annotations above the heatmap.
+Set to \code{FALSE} to hide annotations even when \code{annotations} is supplied.}
 
-\item{cluster.rows, cluster.columns}{Logical clustering controls.}
+\item{missing.features}{How unavailable features are handled: \code{"error"},
+\code{"warn"}, or \code{"drop"}.}
 
-\item{show.row.names, show.column.names}{Logical display controls.}
+\item{cluster.rows, cluster.columns}{Logical clustering controls. Setting
+\code{order.by = "cluster"} enables column clustering.}
 
-\item{heatmap.name}{Legend title.}
+\item{show.row.names}{Legacy-compatible control for feature row names.}
+
+\item{show.feature.names}{Show ordinary feature names or linked
+\code{label.features}. This defaults to \code{show.row.names} and is the preferred
+single-cell-oriented argument.}
+
+\item{show.column.names}{Show individual cell names or aggregated column
+names.}
+
+\item{show.group.names}{Show row and column split titles created by
+\code{feature.groups} and \code{split.by}.}
+
+\item{heatmap.name}{Legend title. Defaults to the displayed expression scale.}
+
+\item{border.color}{Border color drawn around each heatmap slice. Defaults to
+black; set to \code{FALSE} to disable slice borders. A native ComplexHeatmap
+\code{border} argument supplied through \code{...} takes precedence.}
 
 \item{use.raster}{Rasterize the heatmap body. Useful for many cells.}
 
@@ -86,17 +156,23 @@ A \code{Heatmap} object. Use \code{\link[ComplexHeatmap:draw]{ComplexHeatmap::dr
 \code{\link[=save_sc_heatmap]{save_sc_heatmap()}} to save it.
 }
 \description{
-\code{sc_heatmap()} extracts expression for selected features, optionally scales
-each feature, splits cells using a metadata column, and returns a
-\code{\link[ComplexHeatmap:Heatmap]{ComplexHeatmap::Heatmap()}} object. The input Seurat object is not modified.
+\code{sc_heatmap()} creates either a cell-level heatmap or an aggregated average
+expression heatmap. It supports metadata splits, balanced downsampling,
+several cell-ordering strategies, multiple annotations, and the specialized
+per-slice marker ordering used by the original scHeatmap example. The input
+Seurat object is never modified.
 }
 \examples{
 if (requireNamespace("Seurat", quietly = TRUE)) {
-  counts <- matrix(rpois(60, 4), nrow = 6,
-    dimnames = list(paste0("gene", 1:6), paste0("cell", 1:10)))
+  counts <- matrix(rpois(120, 4), nrow = 6,
+    dimnames = list(paste0("gene", 1:6), paste0("cell", 1:20)))
   seu <- Seurat::CreateSeuratObject(counts)
-  seu$condition <- rep(c("control", "treated"), each = 5)
+  seu$condition <- rep(c("control", "treated"), each = 10)
   seu <- Seurat::NormalizeData(seu, verbose = FALSE)
-  ht <- sc_heatmap(seu, paste0("gene", 1:6), group.by = "condition")
+
+  cell_ht <- sc_heatmap(seu, paste0("gene", 1:6),
+    split.by = "condition", downsample = 5)
+  average_ht <- sc_heatmap(seu, paste0("gene", 1:6),
+    mode = "average", aggregate.by = "condition")
 }
 }

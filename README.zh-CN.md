@@ -12,9 +12,12 @@
 ## 主要功能
 
 - 支持读取 Seurat v5 assay 和 layer。
+- 支持逐细胞热图和聚合平均表达热图。
 - 使用任意 Seurat metadata 字段对细胞分组。
+- 对不同分组进行可复现的等量下采样。
 - 按指定顺序组织基因和 marker 集合。
-- 根据 marker 集合得分对每组细胞分别排序。
+- 按 metadata、pseudotime、自定义分数、聚类或 marker 集合排序。
+- 添加多个分类或连续 metadata 注释。
 - 支持逐基因 z-score、数值截断和自定义配色。
 - 返回标准 `ComplexHeatmap` 对象，方便继续添加注释或调整样式。
 - 将同一热图稳定导出为 PDF 和 PNG。
@@ -67,49 +70,58 @@ devtools::install("path/to/scHeatmap")
 ```r
 library(scHeatmap)
 
-markers <- c(
-  "Cd74", "H2-Aa", "H2-Ab1", "H2-Eb1",
-  "Cap1", "Fcrls", "Sft2d1", "Zfp69",
-  "Nrp1", "Lpl", "Itgax", "Apoe", "Cst7"
-)
-
-marker_groups <- list(
-  `MHC-II` = markers[1:4],
-  Homeo = markers[5:8],
-  DAM = markers[9:13]
-)
+markers <- c("Cd74", "H2-Aa", "H2-Ab1", "Apoe", "Cst7", "Lpl")
 
 ht <- sc_heatmap(
   seu,
   features = markers,
-  group.by = "treatment",
-  feature.groups = marker_groups,
-  group.colors = c(
-    WT = "#9b9b9b",
-    APP = "#4c8fe2",
-    `APP+IL33` = "#d0051b"
-  ),
-  sort.by = list(
-    WT = marker_groups[["MHC-II"]],
-    APP = marker_groups$DAM,
-    `APP+IL33` = marker_groups$Homeo
-  ),
-  decreasing = c(WT = FALSE, APP = FALSE, `APP+IL33` = TRUE)
+  label.features = c("Cd74", "Apoe", "Lpl"),
+  split.by = "cell_type",
+  downsample = 100,
+  annotations = c("cell_type", "condition")
 )
 
 ComplexHeatmap::draw(ht)
-save_sc_heatmap(
-  ht,
-  "my_heatmap",
-  width = 6,
-  height = 4.5,
-  formats = c("pdf", "png")
+save_sc_heatmap(ht, "my_heatmap", width = 6, height = 4.5)
+```
+
+如果需要更紧凑的组间比较，可以按一个或多个 metadata 字段计算平均表达：
+
+```r
+average_ht <- sc_heatmap(
+  seu,
+  features = markers,
+  mode = "average",
+  split.by = "cell_type",
+  aggregate.by = c("cell_type", "condition"),
+  annotations = c("cell_type", "condition"),
+  show.column.names = TRUE
 )
 ```
 
-默认情况下，函数从当前 assay 的 `data` layer 读取表达值，对每个基因在所选
-细胞中进行 z-score 标准化，并将显示范围截断至 `[-2, 2]`。如果希望直接展示
-指定 layer 的数值，可以设置 `scale = FALSE, clip = NULL`。
+`order.by` 支持 pseudotime 等 metadata、marker 基因集合、自定义连续分数以及
+`"cluster"`；原始文献中每个分组采用不同 marker 集合排序的方式继续通过
+`sort.by` 支持。
+
+`label.features` 会保留全部基因表达行，并以连线标注选定基因在热图中的位置。当
+`annotations` 包含 `cell_type` 时，默认使用原 `divergentcolor` 配色；可通过
+`annotation.colors` 显式覆盖。
+
+连线基因标签默认使用斜体。设置 `label.fontface = "plain"` 可改为正体；也可用
+`label.gp = grid::gpar(fontface = "plain", col = "red")` 完整控制样式。
+
+不同显示层可以独立关闭：`show.feature.names` 控制基因标签，
+`show.column.names` 控制细胞或聚合列名，`show.group.names` 控制分组切片标题，
+`show.group.annotation` 控制顶部 metadata 注释。
+每个热图分块默认带黑色边框。使用 `border.color = FALSE` 可关闭边框，也可以
+传入其他颜色进行覆盖。
+
+默认从当前 assay 的 `data` layer 读取表达值，逐基因进行 z-score，并截断到
+`[-2, 2]`。在 `mode = "average"` 时，函数先在每个 `aggregate.by` 分组内，
+对每个基因跨细胞计算算术平均值，再对聚合后的矩阵执行相同的标准化和截断。
+设置 `scale = "none", clip = NULL` 可以查看未经标准化的分组均值。
+
+在[使用案例集](inst/examples/scHeatmap-gallery.md)中可以查看五种完整使用方式。
 
 所有参数请查看 `?sc_heatmap` 和 `?save_sc_heatmap`。
 

@@ -7,3 +7,7 @@
 
 # Local generated files not selected as package assets
 development/figures/*.jpg
+development/figures/*.png
+development/figures/*.pdf
+Rplots.pdf
+tests/testthat/Rplots.pdf

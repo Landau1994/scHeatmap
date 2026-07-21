@@ -1,4 +1,17 @@
+#' @importFrom RColorBrewer brewer.pal
+NULL
+
 .sc_heatmap_palettes <- list(
+  rdbu = rev(brewer.pal(11,"RdBu")),
+  spectral = brewer.pal(11,'Spectral')[-6],
+  solarExtra = c("#3361A5","#248AF3","#14B3FF","#88CEEF","#C1D5DC","#EAD397","#FDB31A","#E42A2A","#A31D1D"),
+  divergent = c(
+    "#E41A1C", "#377EB8", "#4DAF4A", "#984EA3", "#F29403", "#F781BF",
+    "#BC9DCC", "#A65628", "#54B0E4", "#222F75", "#1B9E77", "#B2DF8A",
+    "#E3BE00", "#FB9A99", "#E7298A", "#910241", "#00CDD1", "#A6CEE3",
+    "#CE1261", "#5E4FA2", "#8CA77B", "#00441B", "#DEDC00", "#B3DE69",
+    "#8DD3C7", "#999999"
+  ),
   purple_black_yellow = c("#6B53A0", "#000000", "#F0E926"),
   skyblue_black_orange = c("#87CEEB", "#000000", "#FFA500"),
   coolwarm = c(
@@ -26,6 +39,11 @@
 #' @export
 list_sc_heatmap_palettes <- function() {
   names(.sc_heatmap_palettes)
+}
+
+divergent_colors <- function(n) {
+  anchors <- .sc_heatmap_palettes$divergent
+  if (n <= length(anchors)) anchors[seq_len(n)] else grDevices::colorRampPalette(anchors)(n)
 }
 
 #' Get a built-in scHeatmap color palette

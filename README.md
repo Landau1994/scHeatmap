@@ -13,9 +13,12 @@ and within-group cell ordering explicit and reproducible.
 ## Features
 
 - Read expression from Seurat v5 assays and layers.
+- Draw cell-level or aggregated average-expression heatmaps.
 - Split columns using any Seurat metadata field.
+- Balance large groups with reproducible per-group downsampling.
 - Arrange genes into ordered marker groups.
-- Sort cells within each group using marker-set scores.
+- Order cells by metadata, pseudotime, custom scores, clustering, or marker sets.
+- Add multiple categorical or continuous metadata annotations.
 - Apply per-gene z-score scaling, clipping, and custom color schemes.
 - Return a standard `ComplexHeatmap` object for further customization.
 - Export consistent PDF and PNG figures.
@@ -70,50 +73,62 @@ devtools::install("path/to/scHeatmap")
 ```r
 library(scHeatmap)
 
-markers <- c(
-  "Cd74", "H2-Aa", "H2-Ab1", "H2-Eb1",
-  "Cap1", "Fcrls", "Sft2d1", "Zfp69",
-  "Nrp1", "Lpl", "Itgax", "Apoe", "Cst7"
-)
-
-marker_groups <- list(
-  `MHC-II` = markers[1:4],
-  Homeo = markers[5:8],
-  DAM = markers[9:13]
-)
+markers <- c("Cd74", "H2-Aa", "H2-Ab1", "Apoe", "Cst7", "Lpl")
 
 ht <- sc_heatmap(
   seu,
   features = markers,
-  group.by = "treatment",
-  feature.groups = marker_groups,
-  group.colors = c(
-    WT = "#9b9b9b",
-    APP = "#4c8fe2",
-    `APP+IL33` = "#d0051b"
-  ),
-  sort.by = list(
-    WT = marker_groups[["MHC-II"]],
-    APP = marker_groups$DAM,
-    `APP+IL33` = marker_groups$Homeo
-  ),
-  decreasing = c(WT = FALSE, APP = FALSE, `APP+IL33` = TRUE)
+  label.features = c("Cd74", "Apoe", "Lpl"),
+  split.by = "cell_type",
+  downsample = 100,
+  annotations = c("cell_type", "condition")
 )
 
 ComplexHeatmap::draw(ht)
-save_sc_heatmap(
-  ht,
-  "my_heatmap",
-  width = 6,
-  height = 4.5,
-  formats = c("pdf", "png")
+save_sc_heatmap(ht, "my_heatmap", width = 6, height = 4.5)
+```
+
+For a compact group-level view, aggregate cells by one or more metadata fields:
+
+```r
+average_ht <- sc_heatmap(
+  seu,
+  features = markers,
+  mode = "average",
+  split.by = "cell_type",
+  aggregate.by = c("cell_type", "condition"),
+  annotations = c("cell_type", "condition"),
+  show.column.names = TRUE
 )
 ```
 
+`order.by` supports metadata such as pseudotime, marker feature sets, custom
+numeric scores, and `"cluster"`. The original slice-specific marker ordering is
+still available through `sort.by`.
+
+`label.features` keeps every feature in the expression matrix but displays only
+selected genes with connecting lines to their heatmap rows. When `cell_type` is included in `annotations`,
+its default colors use the original `divergentcolor` palette; supply
+`annotation.colors` to override them.
+
+Linked gene labels are italic by default. Use `label.fontface = "plain"` for
+upright text, or `label.gp = grid::gpar(fontface = "plain", col = "red")` for
+full style control.
+
+Display controls are independent: `show.feature.names` hides gene labels,
+`show.column.names` hides cell/aggregate column names, `show.group.names` hides
+split titles, and `show.group.annotation` hides the top metadata annotation.
+Every heatmap slice has a black border by default. Use `border.color = FALSE`
+to remove borders or provide another color to customize them.
+
 By default, expression is read from the active assay's `data` layer, z-scored
-for each gene across selected cells, and clipped to `[-2, 2]`. Set
-`scale = FALSE` and `clip = NULL` to display values from the selected layer
-without these transformations.
+per gene, and clipped to `[-2, 2]`. In `mode = "average"`, the arithmetic mean
+is first calculated for each gene across cells in every `aggregate.by` group;
+the same scaling and clipping are then applied to the group-level matrix. Use
+`scale = "none", clip = NULL` to inspect the unscaled group means.
+
+See the [usage gallery](inst/examples/scHeatmap-gallery.md) for five complete
+patterns.
 
 See `?sc_heatmap` and `?save_sc_heatmap` for all options.
 
