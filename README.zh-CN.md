@@ -259,6 +259,12 @@ conda run -n scptools Rscript -e 'devtools::install(".", upgrade = FALSE)'
 conda run -n scptools Rscript -e 'library(scHeatmap); packageVersion("scHeatmap")'
 ```
 
+这里的 `upgrade = FALSE` 只是不让 `devtools` 自动升级已经安装的 Seurat、
+ComplexHeatmap 等依赖，不会阻止重新安装当前本地版本的 `scHeatmap`。由于 conda
+环境中已经准备好了依赖，建议保留该设置，以免 R 在安装过程中意外升级依赖并
+引入版本冲突。只有在明确希望安装时一并更新依赖的情况下，才使用
+`upgrade = TRUE`。
+
 安装后，只要激活 `scptools` 环境，就可以在任意工作目录使用
 `library(scHeatmap)`。如需确认实际安装路径，可以查看该环境的 `.libPaths()`：
 
