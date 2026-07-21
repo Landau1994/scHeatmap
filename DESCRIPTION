@@ -1,0 +1,25 @@
+Package: scHeatmap
+Title: Simple Heatmaps for Single-Cell Seurat Objects
+Version: 0.1.0
+Authors@R: person("scHeatmap", "Developers", role = c("aut", "cre"),
+    email = "maintainer@example.com")
+Description: Provides a small, opinionated interface for creating publication-ready
+    single-cell expression heatmaps from 'Seurat' objects. Cells can be split and
+    ordered by metadata, genes can be arranged into marker groups, and the result
+    is returned as a 'ComplexHeatmap' object for further customization.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+Depends:
+    R (>= 4.1.0)
+Imports:
+    circlize,
+    ComplexHeatmap,
+    grDevices,
+    SeuratObject
+Suggests:
+    Matrix,
+    Seurat,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+Config/roxygen2/version: 8.0.0
