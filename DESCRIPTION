@@ -1,6 +1,6 @@
 Package: scHeatmap
 Title: Simple Heatmaps for Single-Cell Seurat Objects
-Version: 0.1.1
+Version: 0.1.2
 Authors@R: person("scHeatmap", "Developers", role = c("aut", "cre"),
     email = "maintainer@example.com")
 Description: Provides a small, opinionated interface for creating publication-ready
