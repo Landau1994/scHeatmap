@@ -7,7 +7,10 @@
 `ComplexHeatmap` 基础上提供简洁接口，同时明确保留基因顺序、marker 分组、
 元数据分组以及组内细胞排序，使绘图过程更容易复现和调整。
 
-![单细胞热图示例](man/figures/CR_2020_GSEreplicate_figS2E_20260721.jpg)
+![使用 scHeatmap 复现的文献风格小胶质细胞热图](man/figures/CR_2020_GSEreplicate_figS2E_20260721.jpg)
+
+*基于 CR2020 分析对象复现的文献风格小胶质细胞热图。完整代码见
+[文献图复现](#文献图复现)。*
 
 ## 主要功能
 
@@ -67,34 +70,60 @@ devtools::install("path/to/scHeatmap")
 
 ## 快速开始
 
+下面使用 SeuratData 提供的 PBMC3K 对象给出可复现示例。如果尚未安装该数据集，
+先运行一次 `SeuratData::InstallData("pbmc3k")`。使用 `FindAllMarkers()` 自动筛选
+marker 的完整流程保留在 [`development/demo.R`](development/demo.R) 中。
+
 ```r
 library(scHeatmap)
 
-markers <- c("Cd74", "H2-Aa", "H2-Ab1", "Apoe", "Cst7", "Lpl")
-
-ht <- sc_heatmap(
-  seu,
-  features = markers,
-  label.features = c("Cd74", "Apoe", "Lpl"),
-  split.by = "cell_type",
-  downsample = 100,
-  annotations = c("cell_type", "condition")
+data("pbmc3k.final", package = "pbmc3k.SeuratData")
+pbmc <- Seurat::UpdateSeuratObject(pbmc3k.final)
+pbmc$cell_type <- factor(
+  Seurat::Idents(pbmc),
+  levels = levels(Seurat::Idents(pbmc))
 )
 
-ComplexHeatmap::draw(ht)
-save_sc_heatmap(ht, "my_heatmap", width = 6, height = 4.5)
+marker_groups <- list(
+  `T cells` = c("IL7R", "CCR7", "LTB", "CD3D", "CD8A", "S100A4"),
+  `B cells` = c("MS4A1", "CD79A", "CD37", "CD79B"),
+  Monocytes = c("CD14", "LYZ", "FCGR3A", "MS4A7", "CTSS"),
+  NK = c("GNLY", "NKG7"),
+  Dendritic = c("FCER1A", "CST3"),
+  Platelets = c("GP9", "PF4")
+)
+markers <- unlist(marker_groups, use.names = FALSE)
+label_genes <- c("IL7R", "CD8A", "MS4A1", "CD14", "FCGR3A", "GNLY", "FCER1A", "PF4")
+
+ht <- sc_heatmap(
+  pbmc,
+  features = markers,
+  label.features = label_genes,
+  split.by = "cell_type",
+  feature.groups = marker_groups,
+  downsample = 30,
+  seed = 2026,
+  annotations = "cell_type",
+  colors = sc_heatmap_palette("rdbu"),
+  show.group.names = FALSE
+)
+
+ComplexHeatmap::draw(ht, merge_legend = TRUE)
+save_sc_heatmap(ht, "pbmc3k_heatmap", width = 7, height = 5,
+                merge_legend = TRUE)
 ```
 
 如果需要更紧凑的组间比较，可以按一个或多个 metadata 字段计算平均表达：
 
 ```r
 average_ht <- sc_heatmap(
-  seu,
+  pbmc,
   features = markers,
   mode = "average",
   split.by = "cell_type",
-  aggregate.by = c("cell_type", "condition"),
-  annotations = c("cell_type", "condition"),
+  aggregate.by = "cell_type",
+  feature.groups = marker_groups,
+  annotations = "cell_type",
   show.column.names = TRUE
 )
 ```
@@ -124,6 +153,54 @@ average_ht <- sc_heatmap(
 在[使用案例集](inst/examples/scHeatmap-gallery.md)中可以查看五种完整使用方式。
 
 所有参数请查看 `?sc_heatmap` 和 `?save_sc_heatmap`。
+
+## 文献图复现
+
+README 顶部的图片展示了本包最初针对的复杂场景：基因按生物学程序分组，同时
+每个处理组使用不同的 marker 程序对组内细胞排序。通过 Git LFS 克隆完整仓库后，
+可以使用 `data-raw/` 中的 RDS 复现：
+
+```r
+cr_seu <- readRDS("data-raw/CR_2020_scRNAseq_seu_annoted.rds")
+group_names <- c(WT = "WT", AD = "APP", IL33 = "APP+IL33")
+cr_seu$treatment <- factor(
+  unname(group_names[as.character(cr_seu$Group)]),
+  levels = c("WT", "APP", "APP+IL33")
+)
+Seurat::Idents(cr_seu) <- "cell_type"
+cr_subset <- subset(cr_seu, cell_type %in% c("Homeo", "DAM"))
+SeuratObject::DefaultAssay(cr_subset) <- "RNA"
+
+marker_groups <- list(
+  `MHC-II` = c("Cd74", "H2-Aa", "H2-Ab1", "H2-Eb1"),
+  Homeo = c("Cap1", "Fcrls", "Sft2d1", "Zfp69"),
+  DAM = c("Nrp1", "Lpl", "Itgax", "Apoe", "Cst7")
+)
+
+cr_ht <- sc_heatmap(
+  cr_subset,
+  features = unlist(marker_groups, use.names = FALSE),
+  split.by = "treatment",
+  feature.groups = marker_groups,
+  sort.by = list(
+    WT = marker_groups[["MHC-II"]],
+    APP = marker_groups$DAM,
+    `APP+IL33` = marker_groups$Homeo
+  ),
+  decreasing = c(WT = FALSE, APP = FALSE, `APP+IL33` = TRUE),
+  colors = sc_heatmap_palette("purple_black_yellow"),
+  color.breaks = c(-1, 0, 1),
+  clip = c(-1, 1),
+  row_title_rot = 0,
+  border = FALSE,
+  row_names_gp = grid::gpar(fontface = "italic")
+)
+
+ComplexHeatmap::draw(cr_ht)
+```
+
+对应的图片导出代码以及 PBMC3K marker 自动筛选流程位于
+[`development/demo.R`](development/demo.R)。
 
 对于设置了固定热图主体尺寸的对象，可以计算完整图形所需的设备尺寸：
 

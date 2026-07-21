@@ -8,7 +8,10 @@ heatmaps directly from Seurat objects. It provides a concise interface to
 `ComplexHeatmap` while keeping feature order, marker groups, metadata groups,
 and within-group cell ordering explicit and reproducible.
 
-![Example single-cell heatmap](man/figures/CR_2020_GSEreplicate_figS2E_20260721.jpg)
+![Literature-style microglia heatmap reproduced with scHeatmap](man/figures/CR_2020_GSEreplicate_figS2E_20260721.jpg)
+
+*A literature-style microglia heatmap reproduced from the CR2020 analysis
+object. The complete code is shown in [Literature reproduction](#literature-reproduction).*
 
 ## Features
 
@@ -70,34 +73,61 @@ devtools::install("path/to/scHeatmap")
 
 ## Quick start
 
+The following reproducible example uses the PBMC3K object distributed through
+SeuratData. Install it once with `SeuratData::InstallData("pbmc3k")` if needed.
+The complete workflow for discovering markers with `FindAllMarkers()` is kept
+in [`development/demo.R`](development/demo.R).
+
 ```r
 library(scHeatmap)
 
-markers <- c("Cd74", "H2-Aa", "H2-Ab1", "Apoe", "Cst7", "Lpl")
-
-ht <- sc_heatmap(
-  seu,
-  features = markers,
-  label.features = c("Cd74", "Apoe", "Lpl"),
-  split.by = "cell_type",
-  downsample = 100,
-  annotations = c("cell_type", "condition")
+data("pbmc3k.final", package = "pbmc3k.SeuratData")
+pbmc <- Seurat::UpdateSeuratObject(pbmc3k.final)
+pbmc$cell_type <- factor(
+  Seurat::Idents(pbmc),
+  levels = levels(Seurat::Idents(pbmc))
 )
 
-ComplexHeatmap::draw(ht)
-save_sc_heatmap(ht, "my_heatmap", width = 6, height = 4.5)
+marker_groups <- list(
+  `T cells` = c("IL7R", "CCR7", "LTB", "CD3D", "CD8A", "S100A4"),
+  `B cells` = c("MS4A1", "CD79A", "CD37", "CD79B"),
+  Monocytes = c("CD14", "LYZ", "FCGR3A", "MS4A7", "CTSS"),
+  NK = c("GNLY", "NKG7"),
+  Dendritic = c("FCER1A", "CST3"),
+  Platelets = c("GP9", "PF4")
+)
+markers <- unlist(marker_groups, use.names = FALSE)
+label_genes <- c("IL7R", "CD8A", "MS4A1", "CD14", "FCGR3A", "GNLY", "FCER1A", "PF4")
+
+ht <- sc_heatmap(
+  pbmc,
+  features = markers,
+  label.features = label_genes,
+  split.by = "cell_type",
+  feature.groups = marker_groups,
+  downsample = 30,
+  seed = 2026,
+  annotations = "cell_type",
+  colors = sc_heatmap_palette("rdbu"),
+  show.group.names = FALSE
+)
+
+ComplexHeatmap::draw(ht, merge_legend = TRUE)
+save_sc_heatmap(ht, "pbmc3k_heatmap", width = 7, height = 5,
+                merge_legend = TRUE)
 ```
 
 For a compact group-level view, aggregate cells by one or more metadata fields:
 
 ```r
 average_ht <- sc_heatmap(
-  seu,
+  pbmc,
   features = markers,
   mode = "average",
   split.by = "cell_type",
-  aggregate.by = c("cell_type", "condition"),
-  annotations = c("cell_type", "condition"),
+  aggregate.by = "cell_type",
+  feature.groups = marker_groups,
+  annotations = "cell_type",
   show.column.names = TRUE
 )
 ```
@@ -131,6 +161,56 @@ See the [usage gallery](inst/examples/scHeatmap-gallery.md) for five complete
 patterns.
 
 See `?sc_heatmap` and `?save_sc_heatmap` for all options.
+
+## Literature reproduction
+
+The figure at the top of this README demonstrates the more specialized workflow
+that motivated this package: genes are divided into biological programs, while
+cells in each treatment slice are ordered using a different marker program.
+After cloning the repository with Git LFS, it can be reproduced from the RDS in
+`data-raw/`:
+
+```r
+cr_seu <- readRDS("data-raw/CR_2020_scRNAseq_seu_annoted.rds")
+group_names <- c(WT = "WT", AD = "APP", IL33 = "APP+IL33")
+cr_seu$treatment <- factor(
+  unname(group_names[as.character(cr_seu$Group)]),
+  levels = c("WT", "APP", "APP+IL33")
+)
+Seurat::Idents(cr_seu) <- "cell_type"
+cr_subset <- subset(cr_seu, cell_type %in% c("Homeo", "DAM"))
+SeuratObject::DefaultAssay(cr_subset) <- "RNA"
+
+marker_groups <- list(
+  `MHC-II` = c("Cd74", "H2-Aa", "H2-Ab1", "H2-Eb1"),
+  Homeo = c("Cap1", "Fcrls", "Sft2d1", "Zfp69"),
+  DAM = c("Nrp1", "Lpl", "Itgax", "Apoe", "Cst7")
+)
+
+cr_ht <- sc_heatmap(
+  cr_subset,
+  features = unlist(marker_groups, use.names = FALSE),
+  split.by = "treatment",
+  feature.groups = marker_groups,
+  sort.by = list(
+    WT = marker_groups[["MHC-II"]],
+    APP = marker_groups$DAM,
+    `APP+IL33` = marker_groups$Homeo
+  ),
+  decreasing = c(WT = FALSE, APP = FALSE, `APP+IL33` = TRUE),
+  colors = sc_heatmap_palette("purple_black_yellow"),
+  color.breaks = c(-1, 0, 1),
+  clip = c(-1, 1),
+  row_title_rot = 0,
+  border = FALSE,
+  row_names_gp = grid::gpar(fontface = "italic")
+)
+
+ComplexHeatmap::draw(cr_ht)
+```
+
+The corresponding export code and the PBMC3K marker-discovery workflow are in
+[`development/demo.R`](development/demo.R).
 
 Calculate device dimensions for a heatmap with fixed body dimensions:
 
