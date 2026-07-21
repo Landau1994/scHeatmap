@@ -1,9 +1,7 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
-^CR_2020_scRNAseq_seu_annoted\.rds$
-^CR_2020_GSEreplicate_figS2E_.*\.(jpg|pdf)$
-^demo\.R$
-^utils\.R$
+^data-raw$
+^development$
 ^\.git$
 ^\.agents$
 ^\.codex$

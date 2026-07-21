@@ -8,6 +8,8 @@ heatmaps directly from Seurat objects. It provides a concise interface to
 `ComplexHeatmap` while keeping feature order, marker groups, metadata groups,
 and within-group cell ordering explicit and reproducible.
 
+![Example single-cell heatmap](man/figures/CR_2020_GSEreplicate_figS2E_20260721.jpg)
+
 ## Features
 
 - Read expression from Seurat v5 assays and layers.
@@ -114,6 +116,35 @@ for each gene across selected cells, and clipped to `[-2, 2]`. Set
 without these transformations.
 
 See `?sc_heatmap` and `?save_sc_heatmap` for all options.
+
+Calculate device dimensions for a heatmap with fixed body dimensions:
+
+```r
+size <- calc_ht_size(ht, unit = "inch")
+save_sc_heatmap(ht, "my_heatmap", width = size["width"], height = size["height"])
+```
+
+## Built-in palettes
+
+Curated palettes from the original project utilities are available through one
+documented interface:
+
+```r
+list_sc_heatmap_palettes()
+
+sc_heatmap_palette("purple_black_yellow")
+sc_heatmap_palette("coolwarm", n = 20)
+
+ht <- sc_heatmap(
+  seu,
+  features = markers,
+  colors = sc_heatmap_palette("skyblue_black_orange")
+)
+```
+
+The complete analysis object is stored under `data-raw/` with Git LFS and is
+excluded from the installed R package. The original reproducible analysis and
+legacy utility definitions are retained under `development/`.
 
 ## Development
 

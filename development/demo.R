@@ -1,11 +1,10 @@
 
-tmp_path <- "~/project/SCP/scp_AD/packages/scHeatmap/"
-setwd(tmp_path)
-
 library(Seurat)
-library(tidyverse)
 library(ComplexHeatmap)
 library(circlize)
+
+## Run this script from the scHeatmap package root.
+devtools::load_all(".")
 
 
 
@@ -13,7 +12,7 @@ library(circlize)
 
 
 ## Data from GSE147495 processed by by ourself
-tmp <- "CR_2020_scRNAseq_seu_annoted.rds"
+tmp <- "data-raw/CR_2020_scRNAseq_seu_annoted.rds"
 seu <- readRDS(file = tmp)
 seu$treatment <- plyr::mapvalues(seu$Group,
   from = c("WT","AD","IL33"),
@@ -118,9 +117,8 @@ ph <- Heatmap(mat,
   row_names_gp = gpar(fontface = "italic"))   # raster for many cells
 
 #ph
-fig_prefix <- "CR_2020_GSE"
-MyHeatmapSave(ph,
-  paste0(fig_prefix, 
-    "replicate_figS2E"),
+save_sc_heatmap(ph,
+  "development/figures/CR_2020_GSEreplicate_figS2E",
   width = 6,
-  height = 4.5)
+  height = 4.5,
+  formats = c("pdf", "png"))

@@ -5,6 +5,5 @@
 *.Rcheck/
 *.tar.gz
 
-# Local analysis data and generated figures
-CR_2020_GSEreplicate_figS2E_*.jpg
-CR_2020_GSEreplicate_figS2E_*.pdf
+# Local generated files not selected as package assets
+development/figures/*.jpg

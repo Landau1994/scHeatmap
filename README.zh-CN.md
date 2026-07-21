@@ -7,6 +7,8 @@
 `ComplexHeatmap` 基础上提供简洁接口，同时明确保留基因顺序、marker 分组、
 元数据分组以及组内细胞排序，使绘图过程更容易复现和调整。
 
+![单细胞热图示例](man/figures/CR_2020_GSEreplicate_figS2E_20260721.jpg)
+
 ## 主要功能
 
 - 支持读取 Seurat v5 assay 和 layer。
@@ -110,6 +112,33 @@ save_sc_heatmap(
 指定 layer 的数值，可以设置 `scale = FALSE, clip = NULL`。
 
 所有参数请查看 `?sc_heatmap` 和 `?save_sc_heatmap`。
+
+对于设置了固定热图主体尺寸的对象，可以计算完整图形所需的设备尺寸：
+
+```r
+size <- calc_ht_size(ht, unit = "inch")
+save_sc_heatmap(ht, "my_heatmap", width = size["width"], height = size["height"])
+```
+
+## 内置配色
+
+原项目 `utils.R` 中适合热图使用的配色已经整理到统一、带文档的接口中：
+
+```r
+list_sc_heatmap_palettes()
+
+sc_heatmap_palette("purple_black_yellow")
+sc_heatmap_palette("coolwarm", n = 20)
+
+ht <- sc_heatmap(
+  seu,
+  features = markers,
+  colors = sc_heatmap_palette("skyblue_black_orange")
+)
+```
+
+完整分析对象通过 Git LFS 保存在 `data-raw/`，不会被打包进安装后的 R 包。
+原始复现分析和旧版工具函数保留在 `development/`，用于追溯和后续筛选。
 
 ## 开发与检查
 

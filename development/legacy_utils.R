@@ -18,16 +18,8 @@ MyHeatmapSave <- function(ph,prefix,width,height,legend.position="right"){
   
 }
 
-calc_ht_size = function(ht, unit = "inch") {
-  pdf(NULL)
-  ht = draw(ht)
-  w = ComplexHeatmap:::width(ht)
-  w = convertX(w, unit, valueOnly = TRUE)
-  h = ComplexHeatmap:::height(ht)
-  h = convertY(h, unit, valueOnly = TRUE)
-  dev.off()
-  c(w, h)
-}
+## calc_ht_size() has been migrated to R/calc_ht_size.R. The package version
+## uses the public ComplexHeatmap::ht_size() API.
 
 
 

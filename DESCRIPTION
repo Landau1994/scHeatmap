@@ -16,6 +16,7 @@ Imports:
     circlize,
     ComplexHeatmap,
     grDevices,
+    grid,
     SeuratObject
 Suggests:
     Matrix,
