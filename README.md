@@ -243,10 +243,41 @@ legacy utility definitions are retained under `development/`.
 
 ## Development
 
+Run development commands from the repository root. `load_all()` exposes the
+current source without installing it, which is the fastest way to iterate:
+
 ```r
+devtools::load_all(".")
 devtools::document()
 devtools::test()
-devtools::check()
+devtools::check(document = FALSE, manual = FALSE, cran = FALSE)
+```
+
+Run the complete development script from the repository root with:
+
+```bash
+conda run -n scptools Rscript development/demo.R
+```
+
+The script includes synthetic examples, PBMC3K marker discovery, and the
+CR2020 reproduction. The complete run requires Seurat, dplyr, plyr,
+`pbmc3k.SeuratData`, and the Git LFS RDS under `data-raw/`. Individual sections
+can be run interactively when only part of the example data is available.
+
+To install the current checkout into the R library of the `scptools` conda
+environment, rather than merely loading its source, run:
+
+```bash
+conda run -n scptools Rscript -e 'devtools::install(".", upgrade = FALSE)'
+conda run -n scptools Rscript -e 'library(scHeatmap); packageVersion("scHeatmap")'
+```
+
+The installed package can then be loaded from any working directory whenever
+the `scptools` environment is active. Inspect `.libPaths()` in that environment
+if you need to confirm the installation location:
+
+```bash
+conda run -n scptools Rscript -e '.libPaths()'
 ```
 
 ## License

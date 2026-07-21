@@ -231,10 +231,39 @@ ht <- sc_heatmap(
 
 ## 开发与检查
 
+以下命令应在仓库根目录运行。`load_all()` 会直接加载当前源码而不执行安装，适合
+反复开发和调试：
+
 ```r
+devtools::load_all(".")
 devtools::document()
 devtools::test()
-devtools::check()
+devtools::check(document = FALSE, manual = FALSE, cran = FALSE)
+```
+
+在仓库根目录运行完整开发测试脚本：
+
+```bash
+conda run -n scptools Rscript development/demo.R
+```
+
+该脚本包含合成数据、PBMC3K marker 筛选以及 CR2020 文献图复现。完整运行需要
+Seurat、dplyr、plyr、`pbmc3k.SeuratData`，以及通过 Git LFS 获取的
+`data-raw/` RDS。如果只具备部分数据，也可以在交互式 R 会话中分段执行。
+
+如果需要把当前源码正式安装到 `scptools` conda 环境的 R library，而不是仅使用
+`load_all()` 临时加载，请运行：
+
+```bash
+conda run -n scptools Rscript -e 'devtools::install(".", upgrade = FALSE)'
+conda run -n scptools Rscript -e 'library(scHeatmap); packageVersion("scHeatmap")'
+```
+
+安装后，只要激活 `scptools` 环境，就可以在任意工作目录使用
+`library(scHeatmap)`。如需确认实际安装路径，可以查看该环境的 `.libPaths()`：
+
+```bash
+conda run -n scptools Rscript -e '.libPaths()'
 ```
 
 ## 许可证
